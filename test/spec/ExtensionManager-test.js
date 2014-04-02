@@ -1096,7 +1096,6 @@ define(function (require, exports, module) {
                         
                         // And no overall update icon overlay
                         expect(model.notifyCount).toBe(0);
-                        expect(ExtensionManager.getAvailableUpdates().length).toBe(0);
                     });
                 });
                 
@@ -1225,17 +1224,7 @@ define(function (require, exports, module) {
                         expect($button.length).toBe(1);
                         expect($button.prop("disabled")).toBeFalsy();
                         expect(model.notifyCount).toBe(1);
-                        var availableUpdates = ExtensionManager.getAvailableUpdates();
-                        expect(availableUpdates.length).toBe(1);
-                        
                         expect($("button.install[data-extension-id=mock-extension]", view.$el).length).toBe(0);
-
-                        // cleanAvailableUpdates shouldn't clean the array
-                        expect(ExtensionManager.cleanAvailableUpdates(availableUpdates).length).toBe(1);
-                        // now simulate that update is installed and see if cleanAvailableUpdates() method will work
-                        ExtensionManager.extensions["mock-extension"].installInfo.metadata.version =
-                            ExtensionManager.extensions["mock-extension"].registryInfo.metadata.version;
-                        expect(ExtensionManager.cleanAvailableUpdates(availableUpdates).length).toBe(0);
                     });
                 });
                 
@@ -1254,7 +1243,6 @@ define(function (require, exports, module) {
 
                         // notify count doesn't show extensions that cannot be updated
                         expect(model.notifyCount).toBe(0);
-                        expect(ExtensionManager.getAvailableUpdates().length).toBe(0);
                         
                         expect($("button.install[data-extension-id=mock-extension]", view.$el).length).toBe(0);
                         expect($(".alert.warning", view.$el).length).toBe(0);
@@ -1275,7 +1263,6 @@ define(function (require, exports, module) {
 
                         // notify count doesn't show extensions that cannot be updated
                         expect(model.notifyCount).toBe(0);
-                        expect(ExtensionManager.getAvailableUpdates().length).toBe(0);
                         
                         expect($("button.install[data-extension-id=mock-extension]", view.$el).length).toBe(0);
                         expect($(".alert.warning", view.$el).length).toBe(0);
@@ -1322,6 +1309,26 @@ define(function (require, exports, module) {
                     });
                 });
                 
+                it("should properly return information about available updates and clean it after updates are installed", function () {
+                    mockRegistry = { "mock-extension": makeMockExtension([">0.1", ">0.1"]) };
+                    var mockInstallInfo = { "mock-extension": { installInfo: makeMockInstalledVersion(mockRegistry["mock-extension"], "1.0.0") } };
+                    ExtensionManager._setExtensions(mockInstallInfo);
+                    waitsForDone(ExtensionManager.downloadRegistry()); // ensure mockRegistry integrated in
+                    runs(function () {
+                        setupViewWithMockData(ExtensionManagerViewModel.InstalledViewModel);
+                    });
+                    runs(function () {
+                        var availableUpdates = ExtensionManager.getAvailableUpdates();
+                        expect(availableUpdates.length).toBe(1);
+                        // cleanAvailableUpdates shouldn't clean the array
+                        expect(ExtensionManager.cleanAvailableUpdates(availableUpdates).length).toBe(1);
+                        // now simulate that update is installed and see if cleanAvailableUpdates() method will work
+                        ExtensionManager.extensions["mock-extension"].installInfo.metadata.version =
+                            ExtensionManager.extensions["mock-extension"].registryInfo.metadata.version;
+                        expect(ExtensionManager.cleanAvailableUpdates(availableUpdates).length).toBe(0);
+                    });
+                });
+
             });
             
             
